@@ -19,6 +19,8 @@
 ////////////Global Vars Start
 var timerStart = 100;
 var wrongAnsDeduc = 10;
+var startScreenBlk = document.querySelector('#start-screen');
+var currentTime = 0;
 ////////////Global Vars End
 
 
@@ -48,8 +50,10 @@ function addQuestion () {
 
     //for loop to iter through each element in optionsArr and inset as a list item in the unordered list
     for (var option of optionsArr){
-        questionUL.insertAdjacentHTML('beforeend', `<li>${option}</li>`)
+        questionUL.insertAdjacentHTML('beforeend', `<button><li>${option}</li></button>`)
     } 
+
+    showHtml(questionsBlk);
 
     //event handler to detect user intraction with multi-options under questionsBlk (tag with id #questions), taking avantage of event bubbling (Propergation)
     questionsBlk.addEventListener('click', function(event){
@@ -76,7 +80,7 @@ function showHtml (htag) {
 };
 
 function countDown () {
-    let currentTime = setInterval(function () {
+    currentTime = setInterval(function () {
         var timeEl = document.querySelector('#time')
         
         timeEl.innerText = timerStart;
@@ -96,18 +100,22 @@ var htmlTimerVal = document.querySelector('#time');
 
 //Set timer value to start value
 htmlTimerVal.innerText = timerStart;
-
-var startScreenBlk = document.querySelector('#start-screen');
+currentTime = timerStart;
 
 startScreenBlk.addEventListener('click', function (event){
     buttonPress = event.target.tagName;
     //DEBUG: console.log('Element selected is: ' + buttonPress);
     if (buttonPress === 'BUTTON'){
         //DEBUG: console.log('Button pressed!!!')
+        countDown();
+        //while ( currentTime > 0 ) {
+            hideHtml(startScreenBlk);
+            addQuestion();
+        //}
     }
 })
 
 
-countDown();
+
  
 //Main End
