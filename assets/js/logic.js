@@ -21,6 +21,7 @@ var timerStart = 100;
 var wrongAnsDeduc = 10;
 var startScreenBlk = document.querySelector('#start-screen');
 var currentTime = 0;
+var currentQuestionIndex = 0;
 ////////////Global Vars End
 
 
@@ -28,15 +29,16 @@ var currentTime = 0;
 
 
 //Function to add the question, choices and detect user input
-function addQuestion () {
+function addQuestion (currentQ) {
     //Insert Question from Questions array (questions.js)
-    var currentQuestionIndex = 0;
+    
 
     var startScreen = document.querySelector('#start-screen');
     var questionsBlk = document.querySelector('#questions');
     var endScreen = document.querySelector('#end-screen');
 
-    var currentQuestion = questionsList[currentQuestionIndex].question
+    //var currentQuestion = currentQ[currentQuestionIndex].question
+    var currentQuestion = currentQ.question
     questionsBlk.innerHTML = `
         <h2 id="question-title">${currentQuestion}</h2>
         <div id="choices" class="choices">
@@ -46,21 +48,26 @@ function addQuestion () {
     //Set readable value to reference ul object
     var questionUL = questionsBlk.querySelector('ul');
     //Set readable value to reference current question options array
-    var optionsArr = questionsList[currentQuestionIndex].options;
+    var optionsArr = currentQ.options;
 
     //for loop to iter through each element in optionsArr and inset as a list item in the unordered list
+    var optionCnt = 1
     for (var option of optionsArr){
-        questionUL.insertAdjacentHTML('beforeend', `<button><li>${option}</li></button>`)
+        questionUL.insertAdjacentHTML('beforeend', `<button>${optionCnt}. ${option}</button>`);
+        optionCnt++;
     } 
 
     showHtml(questionsBlk);
 
     //event handler to detect user intraction with multi-options under questionsBlk (tag with id #questions), taking avantage of event bubbling (Propergation)
     questionsBlk.addEventListener('click', function(event){
-        var userAns = event.target.innerText;
-        var correctAns = questionsList[currentQuestionIndex].answer;
+        var userAnsRaw = event.target.innerText;
+        var userAns = userAnsRaw.substr(3,);
+        var correctAns = currentQ.answer;
 
-        if (userAns == correctAns){
+            console.log(userAns);
+
+        if (userAns === correctAns){
             console.log("Correct Answer");
         } else {
             console.log ("Wrong Answer");
@@ -110,7 +117,14 @@ startScreenBlk.addEventListener('click', function (event){
         countDown();
         //while ( currentTime > 0 ) {
             hideHtml(startScreenBlk);
-            addQuestion();
+            for (let questionNo of questionsList) {
+                //console.log (question);
+                addQuestion(questionNo);
+                setInterval(function () {
+                }, 1000);
+                currentQuestionIndex++;
+            }
+            
         //}
     }
 })
