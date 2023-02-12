@@ -16,14 +16,12 @@
     //if answer in incorrect doc timer of x secs and move to next question
     //if timer runs out end the quiz and display the highscore page
 
-////////////Global Vars Start
+////////////GLOBAL vars - start////////////
+
+// Generic vars - start
 var timerStart = 100;
 var stdDeducVal = 1;
 var badansDeducVal = 10;
-var startScreenBlk = document.querySelector('#start-screen');
-var questionsBlk= document.querySelector('#questions');
-var feedbackBlk = document.querySelector('#feedback');
-var endScreen = document.querySelector('#end-screen');
 var questionsListLgth = questionsList.length;
 var currentTime = 0;
 var currentQuestionIndex = 0;
@@ -31,26 +29,144 @@ var currentQuestion = questionsList[currentQuestionIndex];
 var questionUL = '';
 var choicesClickCnt = 0;
 var introClickCnt = 1;
+// Generic vars - end
 
+// HTML target vars - start
+var htmlTimerVal = document.querySelector('#time');
+var startScreenBlk = document.querySelector('#start-screen');
+var questionsBlk= document.querySelector('#questions');
+var feedbackBlk = document.querySelector('#feedback');
+var endScreen = document.querySelector('#end-screen');
+// HTML target vars - end
 
-//Sounds Vars Start
-
-var soundCnt = 1;
+// Sounds vars - start
+var introSoundCnt = 1;
+var thinkingSoundCnt = 1;
 var sound = '';
-
+var introSoundObj = '';
+var thinkSoundObj = '';
 const soundsPath = 'assets/sfx/';
 const introSnd = 'maintheme.mp3';
 const startSnd = 'letsplay.mp3';
 const correctAnsSnd = 'correctanswer.mp3';
 const wrongAnsSnd = 'wronganswer.mp3';
+const thinkingSnd = 'thinkingmusic.mp3'
+//Sounds vars - end
 
-//Sounds Vars Start
-
-////////////Global Vars End
+////////////GLOBAL Vars End////////////
 
 
-////////////Functions Start
+////////////Functions Start////////////
 
+function introStart() {
+    console.log(introClickCnt);
+    if (introClickCnt === 1) {
+        soundOutputnControl('play', 'intro');
+        introClickCnt++;
+    }
+}
+function startQuiz(event) {
+    buttonPress = event.target.tagName;
+    //DEBUG: console.log('Element selected is: ' + buttonPress);
+
+    // console.log('currentQuestionIndex in startblk: ' + currentQuestionIndex);
+
+    if (buttonPress === 'BUTTON'){
+        //DEBUG: console.log('Button pressed!!!')
+        soundOutputnControl('stop', 'intro');
+        soundOutputnControl('play', 'start');
+        countDown();
+        //while ( currentTime > 0 ) {
+        hideHtml(startScreenBlk);
+        addQuestion();
+        soundOutputnControl('stop', 'start');
+        soundOutputnControl('play', 'thinking');
+    };
+};
+
+function choiceSelection(event) {
+    var userAnsRaw = event.target.innerText;
+    var userAns = userAnsRaw.substr(3,);
+    var correctAns = currentQuestion.answer;
+
+    // console.log(userAns);
+    // console.log(correctAns);
+    // console.log('currentQuestionIndex in qblk: ' + currentQuestionIndex);
+    if (choicesClickCnt === 0) {
+        choicesClickCnt = 1;
+    } else{
+        choicesClickCnt++;
+    };
+    
+    console.log(`choicesClickCnt value on initalising: ${choicesClickCnt}`);
+
+    if (choicesClickCnt === 1) {
+
+        console.log(`Passed through choicesClickCnt check, ${choicesClickCnt}`);
+
+
+        // Check if the users answer matches the correct answer from current question
+        if (userAns == correctAns){
+
+            soundOutputnControl('stop', 'thinking');
+ 
+            soundOutputnControl('play', 'correct');
+
+            console.log("Correct Answer");
+            // Show the feedback block (tag) below the list of answers, by removing the .hide from the class list
+            showHtml(feedbackBlk);
+            // Add a new html block (for the result) below the feedback div tag
+            feedbackBlk.insertAdjacentHTML('beforeend', `<h2>CORRECT!!!</h2>`)
+
+            currentQuestionIndex++;
+            
+        } else {
+            
+            // console.log ("Wrong Answer");
+
+            // As the wrong answer has been selected we need to create a penalty by deducting the time count by 10 seconds
+            deductTimer()
+
+            soundOutputnControl('stop', 'thinking');
+
+            soundOutputnControl('play', 'wrong');
+
+            // Display the feedback area
+            showHtml(feedbackBlk);
+
+            // Add the feedback for the user selected answer to the feedback block
+            feedbackBlk.insertAdjacentHTML('beforeend', `<h2>WRONG!!!</h2>`)
+            
+            // Increase the question index to move to the next question and answer data
+            currentQuestionIndex++;
+
+        };
+
+        // use a timeout func to wrap around items that clear the screen ready for the new question
+        setTimeout(()=> {
+    
+            if (currentQuestionIndex < questionsListLgth) {
+                soundOutputnControl('start', 'thinking');
+                // Create short target for selection of h2 tag under feedbackblock html section
+                var h2El = feedbackBlk.querySelector('h2');
+                
+                // Screen clear down function calls and add new question title
+                    // Remove the h2 element from the feedback area
+                    removeHtmlEl(h2El);
+                    // Remove the choices elements from the choices area
+                    removeHtmlEl(questionUL);
+                    // Add the new question title to the page
+                    addQuestion();
+                
+            } else {
+                // as we have got to the end of the questions, we need to change the window object location to the highscores page
+                window.location = './highscores.html'
+            };
+
+            choicesClickCnt = 0;
+        }, 700);
+    };
+};
 
 //Function to add the question, choices and detect user input
 function addQuestion () {
@@ -144,154 +260,103 @@ function deductTimer () {
         
 };
 
-function soundOutputnControl(action, type) {
+function actionIntroSnd(action, type) {
+    if (introSoundCnt === 1) {
+        console.log(`first play ${type}`);
+        introSoundObj = new Audio(soundsPath + introSnd);
+        introSoundCnt++;
+    }
 
-    switch (type) {
-        case 'intro':
-                        if (soundCnt === 1) {
-                            console.log(`first play ${type}`)
-                            sound = new Audio(soundsPath + introSnd);
-                            soundCnt++
-                        }
-                        break;
-        case 'start':
-                        sound = new Audio(soundsPath + startSnd);
-                        break;
-        case 'correct':
-                        sound = new Audio(soundsPath + correctAnsSnd);
-                        break;
-        case 'wrong':
-                        sound = new Audio(soundsPath + wrongAnsSnd);
-                        break;
+    if (action === 'play') {
+        console.log(`play audio (${type})`);
+        introSoundObj.play();
+    } else {
+        console.log(`pause audio (${type})`);
+        introSoundObj.pause();
+    };
+}
+
+function actionThinkingSnd(action, type) {
+    if (thinkingSoundCnt === 1) {
+        console.log(`first play ${type}`);
+        thinkSoundObj = new Audio(soundsPath + thinkingSnd);
+        thinkingSoundCnt++;
     };
 
     if (action === 'play') {
         console.log(`play audio (${type})`);
-        sound.play();
+        thinkSoundObj.play();
     } else {
         console.log(`pause audio (${type})`);
-        sound.pause();
+        thinkSoundObj.pause();
     };
+};
+
+function soundOutputnControl(action, type) {
+
+    switch (type) {
+        case 'intro':
+                        actionIntroSnd(action, type);
+                        break;
+        case 'start':
+                        sound = new Audio(soundsPath + startSnd);
+                        if (action === 'play') {
+                            console.log(`play audio (${type})`);
+                            sound.play();
+                        } else {
+                            console.log(`pause audio (${type})`);
+                            sound.pause();
+                        };
+                        break;
+        case 'correct':
+                        sound = new Audio(soundsPath + correctAnsSnd);
+                        if (action === 'play') {
+                            console.log(`play audio (${type})`);
+                            sound.play();
+                        } else {
+                            console.log(`pause audio (${type})`);
+                            sound.pause();
+                        };
+                        break;
+        case 'wrong':
+                        sound = new Audio(soundsPath + wrongAnsSnd);
+                        if (action === 'play') {
+                            console.log(`play audio (${type})`);
+                            sound.play();
+                        } else {
+                            console.log(`pause audio (${type})`);
+                            sound.pause();
+                        };
+                        break;
+        case 'thinking':
+                        actionThinkingSnd(action, type);
+                        break;
+    };
+};
+
+function init() {
+
+    //Set timer value to start value
+    htmlTimerVal.innerText = timerStart;
+    currentTime = timerStart;
+
 };
 
 //Functions End
 
-//Main Start
+// Event listeners - start
 
-var htmlTimerVal = document.querySelector('#time');
-
-//Set timer value to start value
-htmlTimerVal.innerText = timerStart;
-currentTime = timerStart;
-
-document.querySelector('html').addEventListener('click', function() {
-    console.log(introClickCnt);
-    if (introClickCnt === 1) {
-        soundOutputnControl('play', 'intro');
-        introClickCnt++;
-    }
-});
+document.querySelector('html').addEventListener('click', introStart);
 
 // Action a click event in the startscreenblk for start button
-startScreenBlk.addEventListener('click', function (event){
-    buttonPress = event.target.tagName;
-    //DEBUG: console.log('Element selected is: ' + buttonPress);
+startScreenBlk.addEventListener('click', startQuiz);
 
-    // console.log('currentQuestionIndex in startblk: ' + currentQuestionIndex);
+questionsBlk.querySelector('#choices').addEventListener ('click', choiceSelection);
 
-    if (buttonPress === 'BUTTON'){
-        //DEBUG: console.log('Button pressed!!!')
-        soundOutputnControl('stop', 'intro');
-        soundOutputnControl('play', 'start');
-        countDown();
-        //while ( currentTime > 0 ) {
-        hideHtml(startScreenBlk);
-        addQuestion();
-    };
-});
+// Event listeners - end
 
-// console.log (questionsBlk);
+//Main Start
 
-questionsBlk.querySelector('#choices').addEventListener ('click', function(event) {
-        var userAnsRaw = event.target.innerText;
-        var userAns = userAnsRaw.substr(3,);
-        var correctAns = currentQuestion.answer;
-
-        // console.log(userAns);
-        // console.log(correctAns);
-        // console.log('currentQuestionIndex in qblk: ' + currentQuestionIndex);
-        if (choicesClickCnt === 0) {
-            choicesClickCnt = 1;
-        } else{
-            choicesClickCnt++;
-        };
-        
-        console.log(`choicesClickCnt value on initalising: ${choicesClickCnt}`);
-
-        if (choicesClickCnt === 1) {
-
-            console.log(`Passed through choicesClickCnt check, ${choicesClickCnt}`);
-
-
-            // Check if the users answer matches the correct answer from current question
-            if (userAns == correctAns){
-
-                soundOutputnControl('play', 'correct');
-
-                console.log("Correct Answer");
-                // Show the feedback block (tag) below the list of answers, by removing the .hide from the class list
-                showHtml(feedbackBlk);
-                // Add a new html block (for the result) below the feedback div tag
-                feedbackBlk.insertAdjacentHTML('beforeend', `<h2>CORRECT!!!</h2>`)
-  
-                currentQuestionIndex++;
-                
-            } else {
-                
-                // console.log ("Wrong Answer");
-
-                // As the wrong answer has been selected we need to create a penalty by deducting the time count by 10 seconds
-                deductTimer()
-
-                soundOutputnControl('play', 'wrong');
-
-                // Display the feedback area
-                showHtml(feedbackBlk);
-
-                // Add the feedback for the user selected answer to the feedback block
-                feedbackBlk.insertAdjacentHTML('beforeend', `<h2>WRONG!!!</h2>`)
-                
-                // Increase the question index to move to the next question and answer data
-                currentQuestionIndex++;
-
-            };
-
-            // use a timeout func to wrap around items that clear the screen ready for the new question
-            setTimeout(()=> {
-        
-                if (currentQuestionIndex < questionsListLgth) {
-                    
-                    // Create short target for selection of h2 tag under feedbackblock html section
-                    var h2El = feedbackBlk.querySelector('h2');
-                    
-                    // Screen clear down function calls and add new question title
-                        // Remove the h2 element from the feedback area
-                        removeHtmlEl(h2El);
-                        // Remove the choices elements from the choices area
-                        removeHtmlEl(questionUL);
-                        // Add the new question title to the page
-                        addQuestion();
-                    
-                } else {
-                    // as we have got to the end of the questions, we need to change the window object location to the highscores page
-                    window.location = './highscores.html'
-                };
-
-                choicesClickCnt = 0;
-            }, 500);
-        };
-});
-
-
+init()
  
 //Main End
